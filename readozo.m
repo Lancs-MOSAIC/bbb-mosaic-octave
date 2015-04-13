@@ -19,7 +19,7 @@ old_format=false;
 hdr_magic=fread(fid,1,'uint32=>uint32');
 if hdr_magic == uint32(sscanf('a9e4b8b4','%lx'))
   hdr_version=fread(fid,1,'uint32=>uint32');
-  if hdr_version > 2
+  if hdr_version > 3
     error('Unknown header version %d',hdr_version);
   end
   rec_len=fread(fid,1,'uint32');
@@ -42,6 +42,9 @@ D.samp_rate=nan(num_recs,1);
 D.fft_len=nan(num_recs,1);
 D.channel=nan(num_recs,1);
 D.serial=cell(num_recs,1);
+D.line_freq=nan(num_recs,1);
+D.vsrt_num=nan(num_recs,1)
+D.station_name=cell(num_recs,1);
 D.cal_spec=[];
 D.sig_spec=[];
 
@@ -61,6 +64,11 @@ for k=1:num_recs
     if hdr_version >= 2
       D.channel(k)=fread(fid,1,'int32');
       D.serial{k}=fread(fid,[1 16],'char=>char');
+    end
+    if hdr_version >= 3
+      D.line_freq(k)=fread(fid,1,'double');
+      D.vsrt_num(k)=fread(fid,1,'int32');
+      D.station_name{k}=fread(fid,[1 16],'char=>char');
     end
   end
   if isempty(D.cal_spec)
