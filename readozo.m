@@ -31,7 +31,6 @@ end
 
 fseek(fid,0,'bof'); % rewind file
 
-size(rec_len)
 num_recs=floor(d.bytes/rec_len);
 fprintf(' %d complete records\n',num_recs);
 
@@ -43,7 +42,7 @@ D.fft_len=nan(num_recs,1);
 D.channel=nan(num_recs,1);
 D.serial=cell(num_recs,1);
 D.line_freq=nan(num_recs,1);
-D.vsrt_num=nan(num_recs,1)
+D.vsrt_num=nan(num_recs,1);
 D.station_name=cell(num_recs,1);
 D.cal_spec=[];
 D.sig_spec=[];
