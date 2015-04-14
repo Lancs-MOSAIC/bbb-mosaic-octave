@@ -31,10 +31,13 @@ for k=1:num_timestamps
 
   S=D.sig_spec(:,:,j+idx);
   oz_spec(k,:)=Tsys*calc_ozone_spec(squeeze(mean(S,3)),false);
+  if size(oz_spec,2) ~= 256
+    error('Spectrum is not 256 points in length');
+  end
 
   cal_pow=max(D.cal_spec(:,j+idx));
   freq_step=D.samp_rate(j+1)/D.fft_len(j+1);
-  freq_start=nan;
+  freq_start=D.line_freq(j+1)-128*freq_step;
   total_pow=sum(S(:));
   chan_pow=squeeze(sum(sum(S,1),2));
   cal_freq=1320e6+D.freq_err(j+idx);
