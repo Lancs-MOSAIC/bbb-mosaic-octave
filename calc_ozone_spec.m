@@ -5,7 +5,6 @@ function S=calc_ozone_spec(S,do_plots)
 
 S_bg=S(:,[2 1]);
 n_smooth=11;
-%S_bg=conv2(ones(1,n_smooth)/n_smooth,1,S_bg,'same');
 S_bg=sgolayfilt(S_bg,2,n_smooth);
 
 if do_plots
@@ -36,11 +35,7 @@ end
 
 % linear fit to detrend
 
-%m=(n_smooth-1)/2;
-%m=40;
-m=0;
-%m=0;
-x=-(128-m):(128-m);
+x=-128:127;
 P=polyfit(x,S(N/4+x).',1);
 S0=polyval(P,x).';
 S=S(N/4+x)-S0;
