@@ -35,7 +35,17 @@ for k=1:num_timestamps
     error('Spectrum is not 256 points in length');
   end
 
-  cal_pow=max(D.cal_spec(:,j+idx));
+  % Calibrator "amplitude"
+  % This is really the calibrator power in the peak frequency bin
+  % above the background, normalised by the peak power.
+  % The background is taken at 3 bins away from the peak bin.
+
+  [cal_amp,maxi]=max(D.cal_spec(:,j+idx));
+  for n=1:num_chans
+    x=mean(D.cal_spec(mod(maxi+[-3 3],size(D.cal_spec,1)),j+idx(n)));
+    cal_amp(n)=1-x/cal_amp(n);
+  end
+
   freq_step=D.samp_rate(j+1)/D.fft_len(j+1);
   freq_start=D.line_freq(j+1)-128*freq_step;
   total_pow=sum(S(:));
@@ -44,7 +54,7 @@ for k=1:num_timestamps
   
 
   write_mosaic(ofid,D.st(j+1),freq_step,freq_start,cal_freq, ...
-               cal_pow,chan_pow,total_pow,D.station_name{j+1}, ...
+               cal_amp,chan_pow,total_pow,D.station_name{j+1}, ...
                D.vsrt_num(j+1),oz_spec(k,:));
 
 end
@@ -55,7 +65,7 @@ figure
 plot(mean(oz_spec))
 
 function write_mosaic(fid,st,freq_step,freq_start,cal_freq, ...
-               cal_pow,chan_pow,total_pow,station_name,station_num,oz_spec)
+               cal_amp,chan_pow,total_pow,station_name,station_num,oz_spec)
 
 format_ver='a';
 num_chans=length(cal_freq);
@@ -70,7 +80,7 @@ fprintf(fid,'%04d:%03d:%02d:%02d:%02d ',dv(1),doy,dv(4),dv(5),dv(6));
 fprintf(fid,'%s %d %9.4f %9.7f ',format_ver,num_chans,freq_start/1e6, ...
         freq_step/1e6);
 for k=1:num_chans
-  fprintf(fid,'%d %9.4f %9.5f %.5f %.2f ',sat_flag(k),cal_freq(k)/1e6,cal_pow(k), ...
+  fprintf(fid,'%d %9.4f %9.5f %.5f %.2f ',sat_flag(k),cal_freq(k)/1e6,cal_amp(k), ...
           10*log10(chan_pow(k)),y_factor(k));
 end
 
