@@ -59,9 +59,14 @@ for k=1:num_timestamps
   total_pow=sum(S(:));
   chan_pow=squeeze(sum(sum(S,1),2));
   cal_freq=1320e6+D.freq_err(j+idx);
+  if isfield(D,'max_sig')
+    sat_flag=D.max_sig(j+idx) >= 127;
+  else
+    sat_flag=zeros(1,num_chans);
+  end
   
 
-  write_mosaic(ofid,D.st(j+1),freq_step,freq_start,cal_freq, ...
+  write_mosaic(ofid,D.st(j+1),freq_step,freq_start,sat_flag,cal_freq, ...
                cal_amp,chan_pow,total_pow,D.station_name{j+1}, ...
                D.vsrt_num(j+1),oz_spec(k,:));
 
@@ -72,12 +77,11 @@ fclose(ofid);
 figure
 plot(mean(oz_spec))
 
-function write_mosaic(fid,st,freq_step,freq_start,cal_freq, ...
+function write_mosaic(fid,st,freq_step,freq_start,sat_flag,cal_freq, ...
                cal_amp,chan_pow,total_pow,station_name,station_num,oz_spec)
 
 format_ver='a';
 num_chans=length(cal_freq);
-sat_flag=zeros(1,num_chans);
 y_factor=nan(1,num_chans);
 
 dn=datenum([1970 1 1 0 0 0])+st/86400;
