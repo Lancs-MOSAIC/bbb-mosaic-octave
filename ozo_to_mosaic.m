@@ -29,11 +29,19 @@ for k=1:num_timestamps
 
   %idx=idx(1);
 
+  % Calculate ozone line spectrum for each channel and
+  % take mean so that channels receive equal weight.
+
   S=D.sig_spec(:,:,j+idx);
-  oz_spec(k,:)=Tsys*calc_ozone_spec(squeeze(mean(S,3)),false);
-  if size(oz_spec,2) ~= 256
-    error('Spectrum is not 256 points in length');
+  spec=zeros(256,1);
+  for n=1:num_chans
+    spec=spec+Tsys*calc_ozone_spec(squeeze(S(:,:,n)),false);
+    if length(spec) ~= 256
+      error('Spectrum is not 256 points in length');
+    end
   end
+  oz_spec(k,:)=spec/num_chans;
+    
 
   % Calibrator "amplitude"
   % This is really the calibrator power in the peak frequency bin
