@@ -1,4 +1,4 @@
-function ozo_to_mosaic(D,outfile)
+function ozo_to_mosaic(D,outfile,do_plots)
 % OZO_TO_MOSAIC  Convert binary .ozo files to MOSAIC ASCII format
 
 Tsys=100; % nominal system temperature (K) for scaling spectrum
@@ -74,8 +74,10 @@ end
 
 fclose(ofid);
 
-figure
-plot(mean(oz_spec))
+if do_plots
+  figure
+  plot(mean(oz_spec))
+end
 
 function write_mosaic(fid,st,freq_step,freq_start,sat_flag,cal_freq, ...
                cal_amp,chan_pow,total_pow,station_name,station_num,oz_spec)
