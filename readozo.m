@@ -14,6 +14,7 @@ if fid==-1
 end
 
 old_format=false;
+hdr_version=nan;
 
 % test for header magic
 hdr_magic=fread(fid,1,'uint32=>uint32');
@@ -31,29 +32,49 @@ end
 
 fseek(fid,0,'bof'); % rewind file
 
-num_recs=floor(d.bytes/rec_len);
-fprintf(' %d complete records\n',num_recs);
+% estimate number of records - could be wrong if format changes in file
 
-D.st=nan(num_recs,1);
-D.freq_err=nan(num_recs,1);
-D.num_int=nan(num_recs,2);
-D.samp_rate=nan(num_recs,1);
-D.fft_len=nan(num_recs,1);
-D.channel=nan(num_recs,1);
-D.serial=cell(num_recs,1);
-D.line_freq=nan(num_recs,1);
-D.vsrt_num=nan(num_recs,1);
-D.station_name=cell(num_recs,1);
+est_num_recs=floor(d.bytes/rec_len);
+fprintf(' estimated %d complete records\n',est_num_recs);
+
+D.st=nan(est_num_recs,1);
+D.freq_err=nan(est_num_recs,1);
+D.num_int=nan(est_num_recs,2);
+D.samp_rate=nan(est_num_recs,1);
+D.fft_len=nan(est_num_recs,1);
+D.channel=nan(est_num_recs,1);
+D.serial=cell(est_num_recs,1);
+D.line_freq=nan(est_num_recs,1);
+D.vsrt_num=nan(est_num_recs,1);
+D.station_name=cell(est_num_recs,1);
+D.max_sig=nan(est_num_recs,1);
 D.cal_spec=[];
 D.sig_spec=[];
 
-for k=1:num_recs
+prev_hdr_version=hdr_version;
+
+k=1;
+while true
 
   if ~old_format
-    fseek(fid,3*4,'cof'); % skip first part of header
+    a=fread(fid,[1 3],'uint32');
+    if length(a) ~= 3
+      break; % end of file
+    end
+    hdr_version=a(2);
+    rec_len=a(3);
+    if hdr_version ~= prev_hdr_version
+      fprintf('header version changed: was %d now %d\n',prev_hdr_version, ...
+              hdr_version);
+      prev_hdr_version=hdr_version;
+    end
   end
 
-  D.st(k)=fread(fid,1,'uint64');
+  st=fread(fid,1,'uint64');
+  if isempty(st)
+    break; % end of file
+  end
+  D.st(k)=st;
   D.freq_err(k)=fread(fid,1,'double');
   D.num_int(k,:)=fread(fid,[1 2],'int32');
   if ~old_format
@@ -69,16 +90,20 @@ for k=1:num_recs
       D.vsrt_num(k)=fread(fid,1,'int32');
       D.station_name{k}=fread(fid,[1 16],'char=>char');
     end
+    if hdr_version >= 4
+      D.max_sig(k)=fread(fid,1,'int32');
+    end
   end
   if isempty(D.cal_spec)
-    D.cal_spec=nan(fft_len,num_recs);
-    D.sig_spec=nan(fft_len,2,num_recs);
+    D.cal_spec=nan(fft_len,est_num_recs);
+    D.sig_spec=nan(fft_len,2,est_num_recs);
   end
   s=fread(fid,[fft_len 3],'float32');
   s=fftshift(s,1);
   D.cal_spec(:,k)=s(:,1);
   D.sig_spec(:,:,k)=s(:,2:3);
 
+  k=k+1;
 end
 
 
