@@ -20,7 +20,7 @@ hdr_version=nan;
 hdr_magic=fread(fid,1,'uint32=>uint32');
 if hdr_magic == uint32(sscanf('a9e4b8b4','%lx'))
   hdr_version=fread(fid,1,'uint32=>uint32');
-  if hdr_version > 3
+  if hdr_version > 4
     error('Unknown header version %d',hdr_version);
   end
   rec_len=fread(fid,1,'uint32');
@@ -104,7 +104,25 @@ while true
   D.sig_spec(:,:,k)=s(:,2:3);
 
   k=k+1;
+
 end
 
+% Remove any redundant elements
+
+num_recs=k-1;
+
+fprintf(' read %d records\n',num_recs);
+
+if num_recs < est_num_recs
+  fn=fieldnames(D);
+  for j=1:length(fn)
+    switch D.(fn{j})
+      case {'cal_spec','sig_spec'}
+        D.(fn{j})=D.(fn{j})(:,:,1:num_recs);
+      otherwise
+        D.(fn{j})=D.(fn{j})(1:num_recs,:);
+    end
+  end
+end
 
 fclose(fid);
