@@ -50,7 +50,8 @@ for k=1:num_timestamps
 
   [cal_amp,maxi]=max(D.cal_spec(:,j+idx));
   for n=1:num_chans
-    x=mean(D.cal_spec(mod(maxi+[-3 3],size(D.cal_spec,1)),j+idx(n)));
+    bg_bins=mod(maxi(n)-1+[-3 3],size(D.cal_spec,1))+1;
+    x=mean(D.cal_spec(bg_bins,j+idx(n)));
     cal_amp(n)=1-x/cal_amp(n);
   end
 
