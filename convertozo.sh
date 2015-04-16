@@ -2,18 +2,19 @@
 #
 # Convert yesterday's .ozo file to MOSAIC ASCII
 
-# Where the .ozo files are stored
-OZONE_DATA_DIR=/home/senior/devel/ozone_test/data
+if [ -z $OZONE_DATA_DIR ]
+then
+  # OZONE_DATA_DIR is used by the Octave code to find the data
+  # and must be in the environment before calling this script.
+  echo OZONE_DATA_DIR is not set, unable to proceed
+  exit 1
+fi
 
 # Where the Octave code is
 OCTAVE_PATH=/home/senior/devel/bbb-mosaic-octave
 
-# Where we record what happened
-LOGFILE=$HOME/convertozo.log
-
 NICE=/usr/bin/nice
 OCTAVE=/usr/bin/octave
 
-export OZONE_DATA_DIR
-$NICE $OCTAVE --silent --path ${OCTAVE_PATH} --eval convert_yesterday > $LOGFILE 2>&1
+$NICE $OCTAVE --silent --path ${OCTAVE_PATH} --eval convert_yesterday
 
