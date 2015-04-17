@@ -11,7 +11,7 @@ then
 fi
 
 # Where the Octave code is
-OCTAVE_PATH=/home/senior/devel/bbb-mosaic-octave
+OCTAVE_PATH=/home/ozone/mosaic/bbb-mosaic-octave
 
 NICE=/usr/bin/nice
 OCTAVE=/usr/bin/octave
