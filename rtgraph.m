@@ -73,10 +73,20 @@ while true
       error('Missing or duplicate channels');
     end
     figure(k)
+    subplot(2,1,1);
     plot(f/1e3,10*log10(D(j).cal_spec));
-    xlabel('Frequency offset (kHz)');
+    %xlabel('Frequency offset (kHz)');
     ylabel('Power (dB)');
     title(sprintf('Channel %d %s',k-1,datestr(dn,'yyyy-mm-dd HH:MM:SS')));
+    subplot(2,1,2);
+    plot(f/1e3,10*log10(D(j).sig_spec));
+    xlabel('Frequency offset (kHz)');
+    ylabel('Power (dB)');
+    tstr=['Signal spectra'];
+    if isfield(D(j),'max_sig')
+      tstr=[tstr sprintf(' (max. amplitude = %d)',D(j).max_sig)];
+    end
+    title(tstr);
   end
 
 end
