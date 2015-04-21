@@ -31,7 +31,7 @@ while true
   while true
     fseek(fid,0,'eof');
     file_len=ftell(fid);
-    if file_len-prev_file_len > num_channels*rec_len
+    if file_len-prev_file_len >= num_channels*rec_len
       fprintf('\n'); fflush(stdout);
       break;
     end
@@ -66,12 +66,18 @@ while true
   f=f*D(1).samp_rate/D(1).fft_len;
   dn=datenum([1970 1 1 0 0 0])+D(1).st/86400;
 
-  figure(1)
-  plot(f/1e3,10*log10(D(1).cal_spec));
-  xlabel('Frequency offset (kHz)');
-  ylabel('Power (dB)');
-  title(datestr(dn,'yyyy-mm-dd HH:MM:SS'));  
-  
+  ch=[D.channel];
+  for k=1:num_channels
+    j=find(ch==(k-1));
+    if length(j)~=1
+      error('Missing or duplicate channels');
+    end
+    figure(k)
+    plot(f/1e3,10*log10(D(j).cal_spec));
+    xlabel('Frequency offset (kHz)');
+    ylabel('Power (dB)');
+    title(sprintf('Channel %d %s',k-1,datestr(dn,'yyyy-mm-dd HH:MM:SS')));
+  end
 
 end
 
