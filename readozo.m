@@ -57,6 +57,24 @@ k=1;
 while true
 
   if ~old_format
+    
+    % Search for start of record, in case the
+    % file has been corrupted.
+    
+    pos=ftell(fid);
+    hdr_found=header_search(fid);
+    if ~hdr_found
+      fprintf(' cannot find another record.\n');
+      break;
+    end
+    fseek(fid,-4,'cof'); % rewind to header start
+    pos_new=ftell(fid);
+    if pos_new > pos
+      fprintf('Skipped %d bytes between records\n',pos_new-pos);
+    end  
+    
+    % Read magic value, version and record length
+    
     a=fread(fid,[1 3],'uint32');
     if length(a) ~= 3
       break; % end of file
@@ -70,6 +88,18 @@ while true
     end
   end
 
+  % check record is complete
+  pos=ftell(fid);
+  if ~old_format
+    bytes_to_read=rec_len-3*4; % first 3 fields already read
+  else
+    bytes_to_read=rec_len;
+  end
+  if d.bytes-pos < bytes_to_read
+    fprintf('File ends before current record');
+    break;
+  end
+  
   st=fread(fid,1,'uint64');
   if isempty(st)
     break; % end of file
@@ -103,6 +133,22 @@ while true
   D.cal_spec(:,k)=s(:,1);
   D.sig_spec(:,:,k)=s(:,2:3);
 
+  if ~old_format
+    % If not at end of file, check for start of next record.
+    % If this is missing then the current record is
+    % almost certainly corrupt.
+    
+    pos=ftell(fid);
+    if d.bytes-pos >= 4
+      hdr_magic=fread(fid,1,'uint32=>uint32');
+      fseek(fid,-4,'cof'); % rewind
+      if hdr_magic ~= uint32(sscanf('a9e4b8b4','%lx'))
+        fprintf(' next record does not follow current one - ignoring current record\n');
+        continue; % don't increment record counter
+      end
+    end
+  end  
+  
   k=k+1;
 
 end
@@ -116,9 +162,11 @@ fprintf(' read %d records\n',num_recs);
 if num_recs < est_num_recs
   fn=fieldnames(D);
   for j=1:length(fn)
-    switch D.(fn{j})
-      case {'cal_spec','sig_spec'}
+    switch fn{j}
+      case 'sig_spec'
         D.(fn{j})=D.(fn{j})(:,:,1:num_recs);
+      case 'cal_spec'
+        D.(fn{j})=D.(fn{j})(:,1:num_recs);
       otherwise
         D.(fn{j})=D.(fn{j})(1:num_recs,:);
     end
@@ -126,3 +174,25 @@ if num_recs < est_num_recs
 end
 
 fclose(fid);
+
+% search a byte at a time for the header magic pattern
+
+function hdr_found=header_search(fid)
+
+magic_patt=[0xb4 0xb8 0xe4 0xa9];
+shift_reg=fread(fid,[1 4],'uint8');
+if length(shift_reg) ~= 4
+  hdr_found=false;
+  return;
+end
+
+while ~all(shift_reg==magic_patt)
+  b=fread(fid,1,'uint8');
+  if isempty(b)
+    hdr_found=false;
+    return;
+  end
+  shift_reg=[shift_reg(2:4) b];
+end
+
+hdr_found=true;
